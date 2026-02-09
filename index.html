@@ -1,0 +1,1054 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VELOUR | Premium E-Commerce</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        serif: ['Playfair Display', 'serif'],
+                    },
+                    colors: {
+                        brand: { black: '#1a1a1a', gray: '#f4f4f4', gold: '#D4AF37' }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:wght@400;700&display=swap');
+        
+        body { font-family: 'Inter', sans-serif; overflow-x: hidden; }
+        h1, h2, h3, h4 { font-family: 'Playfair Display', serif; }
+        
+        /* Smooth Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #000; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #333; }
+
+        /* Loader */
+        .loader { 
+            position: fixed; 
+            inset: 0; 
+            background: #fff; 
+            z-index: 9999; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center;
+            transition: opacity 0.8s ease-out;
+        }
+        
+        /* Cart Sidebar */
+        .cart-sidebar { 
+            transform: translateX(100%); 
+            transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1); 
+        }
+        .cart-open .cart-sidebar { transform: translateX(0); }
+        .cart-overlay { 
+            opacity: 0; 
+            pointer-events: none; 
+            transition: opacity 0.3s; 
+            backdrop-filter: blur(2px);
+        }
+        .cart-open .cart-overlay { 
+            opacity: 1; 
+            pointer-events: auto; 
+        }
+
+        /* Product Detail Page (PDP) Overlay */
+        #pdp-overlay { 
+            transform: translateY(100%); 
+            transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 200;
+        }
+        .pdp-active #pdp-overlay { transform: translateY(0); }
+        .pdp-active body { overflow: hidden; }
+
+        /* Mobile Menu */
+        .mobile-menu {
+            transform: translateY(-100%);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            opacity: 0;
+            visibility: hidden;
+        }
+        .mobile-menu.active {
+            transform: translateY(0);
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* Product Card Hover Effects */
+        .product-card { transition: all 0.3s ease; }
+        .product-card:hover { transform: translateY(-8px); }
+        .quick-view-btn { transition: all 0.3s ease; }
+
+        /* Fade In Animation */
+        .fade-in {
+            animation: fadeIn 0.6s ease-out forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Notification */
+        .notification {
+            animation: slideInRight 0.3s ease-out;
+        }
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+    </style>
+</head>
+<body class="bg-white text-brand-black antialiased">
+
+    <div class="loader text-4xl font-serif italic tracking-tighter">Velour.</div>
+
+    <!-- Navigation -->
+    <nav class="fixed w-full top-0 z-40 bg-white/95 backdrop-blur-md border-b border-gray-100 transition-all duration-300">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+            <button class="md:hidden text-xl" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            
+            <a href="index.html" class="text-2xl font-bold tracking-[0.2em] uppercase hover:opacity-80 transition">Velour</a>
+            
+            <!-- Desktop Menu -->
+            <div class="hidden md:flex gap-8 text-xs font-bold tracking-widest uppercase">
+                <a href="index.html" class="hover:text-gray-500 transition border-b-2 border-black">Home</a>
+                <a href="shop.html" class="hover:text-gray-500 transition">Shop All</a>
+                <a href="collections.html" class="hover:text-gray-500 transition">Collections</a>
+                <a href="about.html" class="hover:text-gray-500 transition">About</a>
+                <a href="journal.html" class="hover:text-gray-500 transition">Journal</a>
+                <a href="contact.html" class="hover:text-gray-500 transition">Contact</a>
+            </div>
+            
+            <div class="flex gap-6 items-center">
+                <div class="relative group">
+                    <button class="hover:opacity-70 transition" onclick="toggleCart()">
+                        <i class="fas fa-shopping-bag text-lg"></i>
+                        <span id="cart-count" class="absolute -top-2 -right-2 bg-black text-white text-xs w-5 h-5 rounded-full flex items-center justify-center opacity-0 transition-opacity">0</span>
+                    </button>
+                </div>
+                <a href="#search" class="hover:opacity-70 transition hidden md:block"><i class="fas fa-search"></i></a>
+            </div>
+        </div>
+        
+        <!-- Mobile Menu -->
+        <div class="mobile-menu md:hidden absolute top-full left-0 w-full bg-white border-b border-gray-100 shadow-lg">
+            <div class="flex flex-col py-6 px-6 space-y-6">
+                <a href="index.html" class="text-sm font-bold tracking-widest uppercase hover:text-gray-500 transition py-2" onclick="closeMobileMenu()">Home</a>
+                <a href="shop.html" class="text-sm font-bold tracking-widest uppercase hover:text-gray-500 transition py-2" onclick="closeMobileMenu()">Shop All</a>
+                <a href="collections.html" class="text-sm font-bold tracking-widest uppercase hover:text-gray-500 transition py-2" onclick="closeMobileMenu()">Collections</a>
+                <a href="about.html" class="text-sm font-bold tracking-widest uppercase hover:text-gray-500 transition py-2" onclick="closeMobileMenu()">About</a>
+                <a href="journal.html" class="text-sm font-bold tracking-widest uppercase hover:text-gray-500 transition py-2" onclick="closeMobileMenu()">Journal</a>
+                <a href="contact.html" class="text-sm font-bold tracking-widest uppercase hover:text-gray-500 transition py-2" onclick="closeMobileMenu()">Contact</a>
+                <div class="pt-6 border-t border-gray-100">
+                    <a href="#search" class="text-sm font-bold tracking-widest uppercase hover:text-gray-500 transition py-2" onclick="closeMobileMenu()">
+                        <i class="fas fa-search mr-2"></i> Search
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Cart Sidebar -->
+    <div class="fixed inset-0 z-[150] pointer-events-none">
+        <div class="cart-overlay absolute inset-0 bg-black/70 backdrop-blur-sm" onclick="toggleCart()"></div>
+        <div class="cart-sidebar absolute right-0 top-0 h-full w-full max-w-md bg-white p-8 pointer-events-auto shadow-2xl flex flex-col">
+            <div class="flex justify-between items-center border-b pb-4 mb-4">
+                <h2 class="text-xl font-bold">Shopping Bag <span id="cart-item-count" class="text-gray-500 font-normal">(0 items)</span></h2>
+                <button onclick="toggleCart()" class="text-xl hover:rotate-90 transition">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div id="cart-items" class="flex-1 space-y-6 overflow-y-auto py-4">
+                <p class="text-center text-gray-400 mt-10">Your bag is empty.</p>
+            </div>
+            <div class="border-t pt-6 space-y-4">
+                <div class="flex justify-between">
+                    <span>Subtotal</span>
+                    <span id="cart-subtotal">$0.00</span>
+                </div>
+                <div class="flex justify-between text-sm text-gray-500">
+                    <span>Shipping</span>
+                    <span id="cart-shipping">Calculated at checkout</span>
+                </div>
+                <div class="flex justify-between text-lg font-bold mb-6 border-t pt-4">
+                    <span>Total</span>
+                    <span id="cart-total">$0.00</span>
+                </div>
+                <button id="checkout-btn" class="w-full bg-black text-white py-4 text-sm font-bold tracking-widest hover:bg-gray-800 transition disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                    PROCEED TO CHECKOUT
+                </button>
+                <p class="text-xs text-gray-500 text-center mt-4">Free shipping on orders over $200</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Product Detail Page Overlay -->
+    <div id="pdp-overlay" class="fixed inset-0 bg-white overflow-y-auto">
+        <button onclick="closeProduct()" class="absolute top-6 right-6 z-50 bg-white/80 p-3 rounded-full hover:bg-gray-100 transition shadow-lg">
+            <i class="fas fa-times text-xl"></i>
+        </button>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 min-h-screen">
+            <div class="relative bg-gray-100 h-[50vh] lg:h-screen lg:sticky lg:top-0 overflow-hidden">
+                <img id="pdp-img" src="" class="w-full h-full object-cover">
+                <div class="absolute bottom-4 right-4 bg-white/90 backdrop-blur-sm px-3 py-1 text-sm">
+                    <span id="pdp-sku">SKU: VLR-0001</span>
+                </div>
+            </div>
+            
+            <div class="p-8 lg:p-24 flex flex-col justify-center">
+                <span id="pdp-category" class="text-gray-500 text-sm tracking-widest uppercase mb-4">New Arrival</span>
+                <h1 id="pdp-title" class="text-5xl font-serif mb-4 leading-tight">Product Title</h1>
+                <p id="pdp-price" class="text-2xl font-medium mb-8">$0.00</p>
+                
+                <div class="flex items-center gap-2 mb-6">
+                    <div class="flex text-yellow-400">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star-half-alt"></i>
+                    </div>
+                    <span class="text-gray-500 text-sm" id="pdp-reviews">(24 reviews)</span>
+                </div>
+                
+                <p id="pdp-desc" class="text-gray-600 leading-relaxed mb-10 text-lg">
+                    Description goes here...
+                </p>
+
+                <div class="mb-8">
+                    <p class="text-xs font-bold uppercase tracking-widest mb-3">Select Size <span class="text-red-500">*</span></p>
+                    <div class="flex flex-wrap gap-3" id="pdp-sizes">
+                        <button class="size-btn w-12 h-12 border border-gray-300 flex items-center justify-center hover:border-black transition" data-size="XS">XS</button>
+                        <button class="size-btn w-12 h-12 border border-gray-300 flex items-center justify-center hover:border-black transition" data-size="S">S</button>
+                        <button class="size-btn w-12 h-12 border border-gray-300 flex items-center justify-center hover:border-black transition active" data-size="M">M</button>
+                        <button class="size-btn w-12 h-12 border border-gray-300 flex items-center justify-center hover:border-black transition" data-size="L">L</button>
+                        <button class="size-btn w-12 h-12 border border-gray-300 flex items-center justify-center hover:border-black transition" data-size="XL">XL</button>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-2"><a href="#size-guide" class="underline hover:text-black">View size guide</a></p>
+                </div>
+
+                <div class="mb-8">
+                    <p class="text-xs font-bold uppercase tracking-widest mb-3">Quantity</p>
+                    <div class="flex gap-4">
+                        <div class="flex items-center border border-gray-300 quantity-input">
+                            <button class="decrement-btn px-4 py-3 hover:bg-gray-100 transition">-</button>
+                            <input type="number" id="pdp-quantity" min="1" max="10" value="1" class="w-16 text-center py-3 border-x border-gray-300 focus:outline-none">
+                            <button class="increment-btn px-4 py-3 hover:bg-gray-100 transition">+</button>
+                        </div>
+                        <button onclick="addToCartFromPDP()" class="flex-1 bg-black text-white py-4 text-sm font-bold tracking-widest hover:bg-gray-800 transition">
+                            ADD TO BAG
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="space-y-6 mb-12">
+                    <details class="border-b border-gray-100 pb-4">
+                        <summary class="font-medium cursor-pointer flex justify-between items-center">
+                            <span>Product Details</span>
+                            <i class="fas fa-chevron-down transition-transform"></i>
+                        </summary>
+                        <p id="pdp-details" class="text-gray-600 mt-4 text-sm">Details will appear here.</p>
+                    </details>
+                    <details class="border-b border-gray-100 pb-4">
+                        <summary class="font-medium cursor-pointer flex justify-between items-center">
+                            <span>Shipping & Returns</span>
+                            <i class="fas fa-chevron-down transition-transform"></i>
+                        </summary>
+                        <p class="text-gray-600 mt-4 text-sm">Free worldwide shipping on orders over $200. Easy 30-day return policy.</p>
+                    </details>
+                    <details class="border-b border-gray-100 pb-4">
+                        <summary class="font-medium cursor-pointer flex justify-between items-center">
+                            <span>Care Instructions</span>
+                            <i class="fas fa-chevron-down transition-transform"></i>
+                        </summary>
+                        <p class="text-gray-600 mt-4 text-sm">Dry clean only. Do not bleach. Iron on low heat.</p>
+                    </details>
+                </div>
+                
+                <div class="grid grid-cols-3 gap-6 text-center text-sm">
+                    <div class="p-4 border border-gray-100 rounded-lg">
+                        <i class="fas fa-truck mb-3 text-lg"></i>
+                        <p class="font-medium">Free Shipping</p>
+                        <p class="text-gray-500 text-xs mt-1">Over $200</p>
+                    </div>
+                    <div class="p-4 border border-gray-100 rounded-lg">
+                        <i class="fas fa-undo mb-3 text-lg"></i>
+                        <p class="font-medium">30-Day Returns</p>
+                        <p class="text-gray-500 text-xs mt-1">No questions asked</p>
+                    </div>
+                    <div class="p-4 border border-gray-100 rounded-lg">
+                        <i class="fas fa-shield-alt mb-3 text-lg"></i>
+                        <p class="font-medium">Secure Payment</p>
+                        <p class="text-gray-500 text-xs mt-1">256-bit encryption</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <main>
+        <!-- Hero Section -->
+        <section class="relative h-screen flex items-center justify-center overflow-hidden">
+            <div class="absolute inset-0 z-0">
+                <img src="https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=2070&auto=format&fit=crop" 
+                     class="parallax-bg w-full h-full object-cover brightness-[0.6]" alt="Hero">
+                <div class="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"></div>
+            </div>
+            <div class="relative z-10 text-center text-white p-6">
+                <p class="hero-text text-sm tracking-[0.4em] uppercase mb-4 opacity-0">Spring / Summer '26</p>
+                <h1 class="hero-text text-6xl md:text-9xl font-serif mb-8 opacity-0">Timeless.</h1>
+                <button onclick="document.getElementById('collection').scrollIntoView({behavior: 'smooth'})" 
+                        class="hero-text bg-white text-black px-10 py-4 text-sm font-bold tracking-widest hover:bg-gray-200 transition opacity-0">
+                    DISCOVER COLLECTION
+                </button>
+            </div>
+        </section>
+
+        <!-- Collection Section -->
+        <section id="collection" class="py-24 px-6 max-w-7xl mx-auto">
+            <div class="text-center mb-16 fade-in">
+                <h2 class="text-4xl font-serif mb-4">The Collection</h2>
+                <p class="text-gray-600 max-w-2xl mx-auto mb-8">Discover our curated selection of premium essentials, crafted with attention to detail and sustainable materials.</p>
+                <div class="w-16 h-1 bg-black mx-auto"></div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12" id="product-grid">
+                <!-- Products will be loaded here -->
+            </div>
+        </section>
+
+        <!-- Features Section -->
+        <section id="features" class="py-20 bg-gray-50">
+            <div class="max-w-7xl mx-auto px-6">
+                <div class="text-center mb-16 fade-in">
+                    <h2 class="text-4xl font-serif mb-4">Our Commitment</h2>
+                    <p class="text-gray-600 max-w-2xl mx-auto">Quality, sustainability, and timeless design at the core of everything we create.</p>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-12">
+                    <div class="text-center fade-in">
+                        <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <i class="fas fa-leaf text-2xl text-gray-700"></i>
+                        </div>
+                        <h3 class="text-xl font-serif mb-4">Sustainable Materials</h3>
+                        <p class="text-gray-600">We use only organic, recycled, and ethically sourced materials in all our products.</p>
+                    </div>
+                    
+                    <div class="text-center fade-in">
+                        <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <i class="fas fa-hands-helping text-2xl text-gray-700"></i>
+                        </div>
+                        <h3 class="text-xl font-serif mb-4">Artisan Crafted</h3>
+                        <p class="text-gray-600">Each piece is carefully crafted by skilled artisans with years of experience.</p>
+                    </div>
+                    
+                    <div class="text-center fade-in">
+                        <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <i class="fas fa-award text-2xl text-gray-700"></i>
+                        </div>
+                        <h3 class="text-xl font-serif mb-4">Lifetime Warranty</h3>
+                        <p class="text-gray-600">We stand behind the quality of our products with a comprehensive lifetime warranty.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- About Section -->
+        <section id="about" class="py-24 px-6 max-w-7xl mx-auto">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+                <div class="fade-in">
+                    <h2 class="text-4xl font-serif mb-6">Our Story</h2>
+                    <p class="text-gray-600 mb-6 leading-relaxed">
+                        Founded in 2015, Velour began with a simple vision: to create timeless wardrobe essentials that transcend seasonal trends. Our philosophy is rooted in sustainable luxury—crafting pieces that are both beautiful and responsible.
+                    </p>
+                    <p class="text-gray-600 mb-8 leading-relaxed">
+                        Every garment in our collection is designed to last, using premium materials and artisanal techniques that honor traditional craftsmanship while embracing modern innovation.
+                    </p>
+                    <a href="about.html" class="inline-block bg-black text-white px-8 py-3 text-sm font-bold tracking-widest hover:bg-gray-800 transition">
+                        LEARN MORE
+                    </a>
+                </div>
+                <div class="fade-in">
+                    <img src="https://images.unsplash.com/photo-1601924994987-69e26d50dc26?q=80&w=2070&auto=format&fit=crop" 
+                         class="w-full h-[500px] object-cover rounded-lg shadow-xl" alt="Our Workshop">
+                </div>
+            </div>
+        </section>
+
+        <!-- Journal Section -->
+        <section id="journal" class="py-20 bg-gray-50">
+            <div class="max-w-7xl mx-auto px-6">
+                <div class="text-center mb-16 fade-in">
+                    <h2 class="text-4xl font-serif mb-4">From The Journal</h2>
+                    <p class="text-gray-600 max-w-2xl mx-auto">Insights on sustainable fashion, style guides, and behind-the-scenes looks at our process.</p>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div class="bg-white rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-300">
+                        <img src="https://images.unsplash.com/photo-1523381210434-271e8be1f52b?q=80&w=2070&auto=format&fit=crop" 
+                             class="w-full h-48 object-cover" alt="Sustainable Fashion">
+                        <div class="p-6">
+                            <span class="text-xs font-bold tracking-widest text-gray-500 uppercase">Sustainability</span>
+                            <h3 class="text-xl font-serif mt-2 mb-3">The Future of Ethical Fashion</h3>
+                            <p class="text-gray-600 text-sm mb-4">Exploring innovative materials and production methods that are changing the fashion industry.</p>
+                            <a href="journal.html" class="text-sm font-medium hover:text-gray-700 transition">Read More →</a>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-300">
+                        <img src="https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?q=80&w=2070&auto=format&fit=crop" 
+                             class="w-full h-48 object-cover" alt="Capsule Wardrobe">
+                        <div class="p-6">
+                            <span class="text-xs font-bold tracking-widest text-gray-500 uppercase">Style Guide</span>
+                            <h3 class="text-xl font-serif mt-2 mb-3">Building a Capsule Wardrobe</h3>
+                            <p class="text-gray-600 text-sm mb-4">How to create a versatile collection of timeless pieces that work together seamlessly.</p>
+                            <a href="journal.html" class="text-sm font-medium hover:text-gray-700 transition">Read More →</a>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-300">
+                        <img src="https://images.unsplash.com/photo-1586023492125-27b2c045efd7?q=80&w=2058&auto=format&fit=crop" 
+                             class="w-full h-48 object-cover" alt="Artisan Craft">
+                        <div class="p-6">
+                            <span class="text-xs font-bold tracking-widest text-gray-500 uppercase">Behind The Scenes</span>
+                            <h3 class="text-xl font-serif mt-2 mb-3">Meet Our Artisans</h3>
+                            <p class="text-gray-600 text-sm mb-4">A look at the skilled craftspeople who bring our designs to life with meticulous attention to detail.</p>
+                            <a href="journal.html" class="text-sm font-medium hover:text-gray-700 transition">Read More →</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Newsletter Section -->
+        <section class="py-20 bg-black text-white">
+            <div class="max-w-3xl mx-auto text-center px-6">
+                <h2 class="text-4xl font-serif mb-6">Join Our Community</h2>
+                <p class="text-gray-300 mb-8">Subscribe to receive updates on new collections, exclusive offers, and style inspiration.</p>
+                <form class="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
+                    <input type="email" placeholder="Your email address" 
+                           class="flex-1 px-6 py-4 bg-white/10 border border-white/20 rounded-none text-white placeholder-gray-400 focus:outline-none focus:border-white">
+                    <button type="submit" class="bg-white text-black px-8 py-4 text-sm font-bold tracking-widest hover:bg-gray-200 transition">
+                        SUBSCRIBE
+                    </button>
+                </form>
+                <p class="text-gray-500 text-sm mt-4">By subscribing, you agree to our Privacy Policy. Unsubscribe at any time.</p>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-white py-12 border-t border-gray-800">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
+                <div>
+                    <a href="index.html" class="font-serif text-2xl mb-4 block hover:opacity-80">Velour.</a>
+                    <p class="text-gray-500 text-sm">Timeless essentials for the conscious consumer.</p>
+                </div>
+                <div>
+                    <h4 class="font-bold mb-4">Shop</h4>
+                    <ul class="space-y-3 text-gray-500 text-sm">
+                        <li><a href="shop.html" class="hover:text-white transition">All Products</a></li>
+                        <li><a href="collections.html#new-arrivals" class="hover:text-white transition">New Arrivals</a></li>
+                        <li><a href="collections.html#best-sellers" class="hover:text-white transition">Best Sellers</a></li>
+                        <li><a href="collections.html#sale" class="hover:text-white transition">Sale</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-bold mb-4">Information</h4>
+                    <ul class="space-y-3 text-gray-500 text-sm">
+                        <li><a href="about.html" class="hover:text-white transition">About Us</a></li>
+                        <li><a href="contact.html" class="hover:text-white transition">Contact</a></li>
+                        <li><a href="shipping.html" class="hover:text-white transition">Shipping & Returns</a></li>
+                        <li><a href="size-guide.html" class="hover:text-white transition">Size Guide</a></li>
+                        <li><a href="faq.html" class="hover:text-white transition">FAQ</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-bold mb-4">Connect</h4>
+                    <div class="flex gap-4 mb-6">
+                        <a href="https://instagram.com" target="_blank" class="text-gray-500 hover:text-white transition"><i class="fab fa-instagram"></i></a>
+                        <a href="https://facebook.com" target="_blank" class="text-gray-500 hover:text-white transition"><i class="fab fa-facebook-f"></i></a>
+                        <a href="https://pinterest.com" target="_blank" class="text-gray-500 hover:text-white transition"><i class="fab fa-pinterest"></i></a>
+                        <a href="https://tiktok.com" target="_blank" class="text-gray-500 hover:text-white transition"><i class="fab fa-tiktok"></i></a>
+                    </div>
+                    <p class="text-gray-500 text-sm">
+                        <a href="mailto:customer@velour.com" class="hover:text-white transition">customer@velour.com</a><br>
+                        <a href="tel:+15551234567" class="hover:text-white transition">+1 (555) 123-4567</a>
+                    </p>
+                </div>
+            </div>
+            <div class="border-t border-gray-800 pt-8 text-center text-gray-500 text-sm">
+                <p>© 2026 Velour Inc. Made by <span class="text-white font-bold">Dw33pY</span>. All rights reserved. 
+                <a href="privacy.html" class="hover:text-white transition mx-2">Privacy Policy</a> | 
+                <a href="terms.html" class="hover:text-white transition mx-2">Terms of Service</a></p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Floating Action Buttons -->
+    <a href="https://wa.me/12345" target="_blank" class="fixed bottom-8 left-8 z-30 bg-[#25D366] text-white p-4 rounded-full shadow-xl hover:scale-110 transition" aria-label="Chat on WhatsApp">
+        <i class="fab fa-whatsapp text-2xl"></i>
+    </a>
+    <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})" class="fixed bottom-8 right-8 z-30 bg-white text-black p-4 rounded-full shadow-xl hover:scale-110 transition" aria-label="Back to top">
+        <i class="fas fa-arrow-up text-xl"></i>
+    </button>
+
+    <script>
+        // --- ENHANCED DATA ---
+        const products = [
+            {
+                id: 1,
+                title: "Silk Evening Gown",
+                price: 450,
+                img: "https://images.unsplash.com/photo-1595777457583-95e059d581b8?auto=format&fit=crop&w=800&q=80",
+                desc: "Crafted from 100% organic silk, this evening gown features a draping silhouette that accentuates elegance. Perfect for formal occasions and special events.",
+                category: "Evening Wear",
+                details: "Made from 100% organic silk. Hand-finished seams. Concealed back zipper. Dry clean only.",
+                sku: "VLR-1001",
+                reviews: 24,
+                rating: 4.5,
+                sizes: ["XS", "S", "M", "L", "XL"]
+            },
+            {
+                id: 2,
+                title: "Oversized Wool Coat",
+                price: 320,
+                img: "https://images.unsplash.com/photo-1539533018447-63fcce2678e3?auto=format&fit=crop&w=800&q=80",
+                desc: "A winter essential. Italian wool blend with a structured shoulder and relaxed fit for modern layering. Features hidden pockets and a notched lapel.",
+                category: "Outerwear",
+                details: "80% wool, 20% cashmere blend. Fully lined. Notched lapel. Hidden pockets. Dry clean only.",
+                sku: "VLR-1002",
+                reviews: 18,
+                rating: 4.8,
+                sizes: ["S", "M", "L", "XL"]
+            },
+            {
+                id: 3,
+                title: "Artisan Leather Tote",
+                price: 180,
+                img: "https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&w=800&q=80",
+                desc: "Hand-stitched full-grain leather. The perfect companion for the daily commute or weekend getaway. Features multiple compartments and a detachable shoulder strap.",
+                category: "Accessories",
+                details: "Full-grain vegetable-tanned leather. Brass hardware. Detachable shoulder strap. Lined interior with pockets.",
+                sku: "VLR-1003",
+                reviews: 32,
+                rating: 4.9,
+                sizes: ["One Size"]
+            },
+            {
+                id: 4,
+                title: "Cashmere Crewneck",
+                price: 280,
+                img: "https://images.unsplash.com/photo-1576566588028-4147f3842f27?auto=format&fit=crop&w=800&q=80",
+                desc: "Ultra-soft 100% Mongolian cashmere crewneck sweater. Lightweight yet warm, perfect for layering or wearing on its own.",
+                category: "Knitwear",
+                details: "100% Mongolian cashmere. Ribbed cuffs and hem. Machine washable on delicate cycle.",
+                sku: "VLR-1004",
+                reviews: 41,
+                rating: 4.7,
+                sizes: ["XS", "S", "M", "L", "XL"]
+            },
+            {
+                id: 5,
+                title: "Tailored Wool Trousers",
+                price: 190,
+                img: "https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?auto=format&fit=crop&w=800&q=80",
+                desc: "Classic straight-leg trousers in premium wool blend. Featuring a high waist, front pleats, and a clean silhouette suitable for both office and casual wear.",
+                category: "Bottoms",
+                details: "Wool and elastane blend for stretch and comfort. High-rise waist. Front pleats. Dry clean recommended.",
+                sku: "VLR-1005",
+                reviews: 27,
+                rating: 4.6,
+                sizes: ["XS", "S", "M", "L"]
+            },
+            {
+                id: 6,
+                title: "Linen Button-Up Shirt",
+                price: 120,
+                img: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&w=800&q=80",
+                desc: "Breathable linen shirt with a relaxed fit. Perfect for warm weather, featuring a classic collar and button-down front.",
+                category: "Tops",
+                details: "100% organic linen. Relaxed fit. Button-down collar. Machine washable.",
+                sku: "VLR-1006",
+                reviews: 36,
+                rating: 4.4,
+                sizes: ["XS", "S", "M", "L", "XL"]
+            }
+        ];
+
+        let cart = [];
+        let selectedSize = "M";
+        let selectedQuantity = 1;
+
+        // --- INITIALIZATION ---
+        window.addEventListener('load', () => {
+            // Loader
+            gsap.to(".loader", { opacity: 0, duration: 0.8, onComplete: () => {
+                document.querySelector(".loader").style.display = "none";
+                initAnimations();
+            }});
+            
+            // Hero Animations
+            gsap.to(".hero-text", { y: -20, opacity: 1, duration: 1, stagger: 0.2, delay: 0.5 });
+            
+            // Render Products
+            renderProducts();
+            
+            // Parallax
+            gsap.to(".parallax-bg", {
+                yPercent: 20,
+                ease: "none",
+                scrollTrigger: { trigger: "body", start: "top top", end: "bottom top", scrub: true }
+            });
+
+            // Initialize event listeners
+            initEventListeners();
+        });
+
+        // --- ANIMATIONS ---
+        function initAnimations() {
+            // Fade in elements on scroll
+            const fadeElements = document.querySelectorAll('.fade-in');
+            fadeElements.forEach(el => {
+                gsap.from(el, {
+                    scrollTrigger: {
+                        trigger: el,
+                        start: "top 80%",
+                        toggleActions: "play none none none"
+                    },
+                    y: 30,
+                    opacity: 0,
+                    duration: 0.8,
+                    ease: "power2.out"
+                });
+            });
+        }
+
+        // --- PRODUCT RENDERING ---
+        function renderProducts() {
+            const grid = document.getElementById('product-grid');
+            grid.innerHTML = '';
+            
+            products.forEach(p => {
+                const productCard = document.createElement('div');
+                productCard.className = 'product-card group cursor-pointer';
+                productCard.onclick = () => openProduct(p.id);
+                
+                productCard.innerHTML = `
+                    <div class="overflow-hidden mb-4 relative">
+                        <img src="${p.img}" alt="${p.title}" class="w-full h-[500px] object-cover transition duration-700 group-hover:scale-105">
+                        <div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition duration-300 flex items-center justify-center">
+                            <span class="quick-view-btn bg-white text-black px-6 py-3 text-sm font-bold tracking-widest uppercase hover:bg-black hover:text-white transition">Quick View</span>
+                        </div>
+                        ${p.category === 'New Arrival' ? '<span class="absolute top-4 left-4 bg-white px-3 py-1 text-xs font-bold tracking-widest">NEW</span>' : ''}
+                    </div>
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h3 class="text-xl font-serif">${p.title}</h3>
+                            <p class="text-gray-500">$${p.price}.00</p>
+                            <div class="flex items-center mt-1">
+                                <div class="flex text-yellow-400 text-sm">
+                                    ${generateStarRating(p.rating)}
+                                </div>
+                                <span class="text-gray-400 text-sm ml-2">(${p.reviews})</span>
+                            </div>
+                        </div>
+                        <button class="w-10 h-10 rounded-full border border-black flex items-center justify-center hover:bg-black hover:text-white transition" 
+                                onclick="event.stopPropagation(); addToCart(${p.id})">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+                `;
+                
+                grid.appendChild(productCard);
+            });
+        }
+
+        function generateStarRating(rating) {
+            let stars = '';
+            const fullStars = Math.floor(rating);
+            const hasHalfStar = rating % 1 !== 0;
+            
+            for (let i = 0; i < fullStars; i++) {
+                stars += '<i class="fas fa-star"></i>';
+            }
+            
+            if (hasHalfStar) {
+                stars += '<i class="fas fa-star-half-alt"></i>';
+            }
+            
+            const emptyStars = 5 - Math.ceil(rating);
+            for (let i = 0; i < emptyStars; i++) {
+                stars += '<i class="far fa-star"></i>';
+            }
+            
+            return stars;
+        }
+
+        // --- MOBILE MENU FUNCTIONS ---
+        function toggleMobileMenu() {
+            document.querySelector('.mobile-menu').classList.toggle('active');
+            document.body.style.overflow = document.querySelector('.mobile-menu').classList.contains('active') ? 'hidden' : '';
+        }
+
+        function closeMobileMenu() {
+            document.querySelector('.mobile-menu').classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        // --- PRODUCT PAGE LOGIC ---
+        let currentProduct = null;
+
+        function openProduct(id) {
+            currentProduct = products.find(p => p.id === id);
+            if(!currentProduct) return;
+
+            // Populate Data
+            document.getElementById('pdp-img').src = currentProduct.img;
+            document.getElementById('pdp-title').innerText = currentProduct.title;
+            document.getElementById('pdp-price').innerText = `$${currentProduct.price}.00`;
+            document.getElementById('pdp-desc').innerText = currentProduct.desc;
+            document.getElementById('pdp-details').innerText = currentProduct.details;
+            document.getElementById('pdp-category').innerText = currentProduct.category;
+            document.getElementById('pdp-sku').innerText = `SKU: ${currentProduct.sku}`;
+            document.getElementById('pdp-reviews').innerText = `(${currentProduct.reviews} reviews)`;
+            
+            // Generate star rating
+            const ratingContainer = document.querySelector('#pdp-overlay .flex.text-yellow-400');
+            if (ratingContainer) {
+                ratingContainer.innerHTML = generateStarRating(currentProduct.rating);
+            }
+            
+            // Update sizes
+            const sizesContainer = document.getElementById('pdp-sizes');
+            sizesContainer.innerHTML = '';
+            currentProduct.sizes.forEach(size => {
+                const isActive = size === "M";
+                const sizeBtn = document.createElement('button');
+                sizeBtn.className = `size-btn w-12 h-12 border flex items-center justify-center transition ${isActive ? 'border-black bg-black text-white' : 'border-gray-300 hover:border-black'}`;
+                sizeBtn.innerText = size;
+                sizeBtn.dataset.size = size;
+                sizeBtn.onclick = () => selectSize(size);
+                sizesContainer.appendChild(sizeBtn);
+            });
+
+            // Reset quantity
+            document.getElementById('pdp-quantity').value = 1;
+            selectedQuantity = 1;
+
+            // Open Overlay
+            document.body.classList.add('pdp-active');
+            document.body.style.overflow = 'hidden';
+            
+            // Animate Elements In
+            gsap.from("#pdp-overlay .grid > div", { y: 50, opacity: 0, duration: 0.8, stagger: 0.2, delay: 0.3 });
+        }
+
+        function selectSize(size) {
+            selectedSize = size;
+            document.querySelectorAll('.size-btn').forEach(btn => {
+                if (btn.dataset.size === size) {
+                    btn.classList.add('border-black', 'bg-black', 'text-white');
+                    btn.classList.remove('border-gray-300');
+                } else {
+                    btn.classList.remove('border-black', 'bg-black', 'text-white');
+                    btn.classList.add('border-gray-300');
+                }
+            });
+        }
+
+        function closeProduct() {
+            document.body.classList.remove('pdp-active');
+            document.body.style.overflow = '';
+            currentProduct = null;
+        }
+
+        // --- CART LOGIC ---
+        function toggleCart() {
+            document.body.classList.toggle('cart-open');
+            if (document.body.classList.contains('cart-open')) {
+                updateCartUI();
+            }
+        }
+
+        function addToCart(productId) {
+            const product = products.find(p => p.id === productId);
+            if (!product) return;
+            
+            const cartItem = {
+                ...product,
+                cartId: Date.now(),
+                size: selectedSize,
+                quantity: 1
+            };
+            
+            cart.push(cartItem);
+            updateCartUI();
+            
+            // Visual Feedback
+            showNotification(`${product.title} added to cart`);
+            updateCartBadge();
+        }
+
+        function addToCartFromPDP() {
+            if(!currentProduct) return;
+            
+            const quantity = parseInt(document.getElementById('pdp-quantity').value) || 1;
+            
+            const cartItem = {
+                ...currentProduct,
+                cartId: Date.now(),
+                size: selectedSize,
+                quantity: quantity
+            };
+            
+            cart.push(cartItem);
+            updateCartUI();
+            
+            // Visual Feedback
+            const btn = event.currentTarget;
+            const originalText = btn.innerText;
+            btn.innerText = "ADDED TO BAG!";
+            btn.classList.add("bg-green-600");
+            
+            showNotification(`${currentProduct.title} (${selectedSize}) added to cart`);
+            
+            setTimeout(() => {
+                btn.innerText = originalText;
+                btn.classList.remove("bg-green-600");
+            }, 1500);
+        }
+
+        function removeFromCart(cartId) {
+            cart = cart.filter(item => item.cartId !== cartId);
+            updateCartUI();
+            updateCartBadge();
+            
+            showNotification("Item removed from cart");
+        }
+
+        function updateCartItemQuantity(cartId, change) {
+            const item = cart.find(item => item.cartId === cartId);
+            if (item) {
+                item.quantity = Math.max(1, item.quantity + change);
+                updateCartUI();
+            }
+        }
+
+        function updateCartUI() {
+            const countEl = document.getElementById('cart-count');
+            const itemCountEl = document.getElementById('cart-item-count');
+            const itemsEl = document.getElementById('cart-items');
+            const subtotalEl = document.getElementById('cart-subtotal');
+            const totalEl = document.getElementById('cart-total');
+            const checkoutBtn = document.getElementById('checkout-btn');
+
+            // Update Badge
+            const itemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+            countEl.innerText = itemCount;
+            countEl.style.opacity = itemCount > 0 ? 1 : 0;
+            
+            // Update item count text
+            itemCountEl.innerText = `(${itemCount} ${itemCount === 1 ? 'item' : 'items'})`;
+
+            // Update Items List
+            if (cart.length === 0) {
+                itemsEl.innerHTML = '<p class="text-center text-gray-400 mt-10">Your bag is empty.</p>';
+                subtotalEl.innerText = "$0.00";
+                totalEl.innerText = "$0.00";
+                checkoutBtn.disabled = true;
+            } else {
+                itemsEl.innerHTML = cart.map(item => `
+                    <div class="flex gap-4 pb-6 border-b border-gray-100">
+                        <img src="${item.img}" class="w-20 h-24 object-cover" alt="${item.title}">
+                        <div class="flex-1">
+                            <div class="flex justify-between">
+                                <h4 class="font-serif font-bold">${item.title}</h4>
+                                <button class="text-gray-400 hover:text-red-500 transition" onclick="removeFromCart(${item.cartId})">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                            <p class="text-gray-500 text-sm mt-1">Size: ${item.size}</p>
+                            <div class="flex justify-between items-center mt-4">
+                                <div class="flex items-center border border-gray-300">
+                                    <button class="px-3 py-1 hover:bg-gray-100 transition" onclick="updateCartItemQuantity(${item.cartId}, -1)">-</button>
+                                    <span class="px-3">${item.quantity}</span>
+                                    <button class="px-3 py-1 hover:bg-gray-100 transition" onclick="updateCartItemQuantity(${item.cartId}, 1)">+</button>
+                                </div>
+                                <p class="font-medium">$${(item.price * item.quantity).toFixed(2)}</p>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+                
+                // Calculate Totals
+                const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+                const shipping = subtotal > 200 ? 0 : 15;
+                const total = subtotal + shipping;
+                
+                subtotalEl.innerText = `$${subtotal.toFixed(2)}`;
+                totalEl.innerText = `$${total.toFixed(2)}`;
+                
+                // Update shipping info
+                document.getElementById('cart-shipping').innerText = shipping === 0 ? 'FREE' : `$${shipping.toFixed(2)}`;
+                
+                checkoutBtn.disabled = false;
+            }
+        }
+
+        function updateCartBadge() {
+            const itemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+            const countEl = document.getElementById('cart-count');
+            countEl.innerText = itemCount;
+            countEl.style.opacity = itemCount > 0 ? 1 : 0;
+            
+            // Add animation to badge
+            if (itemCount > 0) {
+                countEl.classList.add('animate-pulse');
+                setTimeout(() => countEl.classList.remove('animate-pulse'), 500);
+            }
+        }
+
+        // --- NOTIFICATION SYSTEM ---
+        function showNotification(message) {
+            // Remove existing notification
+            const existingNotification = document.querySelector('.notification');
+            if (existingNotification) {
+                existingNotification.remove();
+            }
+            
+            // Create new notification
+            const notification = document.createElement('div');
+            notification.className = 'notification fixed top-24 right-6 bg-black text-white px-6 py-3 rounded-lg shadow-xl z-50';
+            notification.innerHTML = `
+                <div class="flex items-center gap-3">
+                    <i class="fas fa-check-circle"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Remove after 3 seconds
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                notification.style.transform = 'translateX(100%)';
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.remove();
+                    }
+                }, 300);
+            }, 3000);
+        }
+
+        // --- EVENT LISTENERS ---
+        function initEventListeners() {
+            // Quantity input handlers
+            document.addEventListener('click', (e) => {
+                if (e.target.classList.contains('decrement-btn')) {
+                    const input = e.target.closest('.quantity-input').querySelector('input');
+                    input.value = Math.max(1, parseInt(input.value) - 1);
+                    selectedQuantity = parseInt(input.value);
+                }
+                
+                if (e.target.classList.contains('increment-btn')) {
+                    const input = e.target.closest('.quantity-input').querySelector('input');
+                    input.value = Math.min(10, parseInt(input.value) + 1);
+                    selectedQuantity = parseInt(input.value);
+                }
+            });
+            
+            // Quantity input change
+            document.addEventListener('change', (e) => {
+                if (e.target.id === 'pdp-quantity') {
+                    selectedQuantity = Math.min(10, Math.max(1, parseInt(e.target.value) || 1));
+                    e.target.value = selectedQuantity;
+                }
+            });
+            
+            // Close PDP on escape key
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && document.body.classList.contains('pdp-active')) {
+                    closeProduct();
+                }
+                if (e.key === 'Escape' && document.body.classList.contains('cart-open')) {
+                    toggleCart();
+                }
+                if (e.key === 'Escape' && document.querySelector('.mobile-menu.active')) {
+                    closeMobileMenu();
+                }
+            });
+            
+            // Accordion toggle for product details
+            document.querySelectorAll('details').forEach(detail => {
+                detail.addEventListener('toggle', () => {
+                    const icon = detail.querySelector('i');
+                    if (detail.open) {
+                        icon.style.transform = 'rotate(180deg)';
+                    } else {
+                        icon.style.transform = 'rotate(0deg)';
+                    }
+                });
+            });
+
+            // Close mobile menu when clicking outside
+            document.addEventListener('click', (e) => {
+                const mobileMenu = document.querySelector('.mobile-menu');
+                const menuButton = document.querySelector('button[onclick="toggleMobileMenu()"]');
+                
+                if (mobileMenu.classList.contains('active') && 
+                    !mobileMenu.contains(e.target) && 
+                    !menuButton.contains(e.target)) {
+                    closeMobileMenu();
+                }
+            });
+        }
+
+        // --- CHECKOUT SIMULATION ---
+        function proceedToCheckout() {
+            if (cart.length === 0) return;
+            
+            // In a real app, this would redirect to a checkout page
+            showNotification(`Proceeding to checkout with ${cart.length} items`);
+            
+            // Simulate API call
+            setTimeout(() => {
+                // Clear cart after successful checkout
+                cart = [];
+                updateCartUI();
+                updateCartBadge();
+                toggleCart();
+                
+                // Show success message
+                showNotification('Order placed successfully! Thank you for your purchase.');
+            }, 1000);
+        }
+        
+        // Attach checkout function to button
+        document.addEventListener('DOMContentLoaded', () => {
+            const checkoutBtn = document.getElementById('checkout-btn');
+            if (checkoutBtn) {
+                checkoutBtn.addEventListener('click', proceedToCheckout);
+            }
+        });
+    </script>
+</body>
+</html>
